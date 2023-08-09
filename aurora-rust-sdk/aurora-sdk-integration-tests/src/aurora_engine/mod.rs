@@ -1,16 +1,17 @@
 use crate::wnear::Wnear;
 use aurora_engine::parameters::{
-    CallArgs, DeployErc20TokenArgs, FunctionCallArgsV2, NewCallArgs, NewCallArgsV2, SubmitResult,
-    TransactionStatus, ViewCallArgs,
+    CallArgs, DeployErc20TokenArgs, FunctionCallArgsV2, NewCallArgs, NewCallArgsV2, ResultLog,
+    SubmitResult, TransactionStatus, ViewCallArgs,
 };
 use aurora_engine_types::{
     types::{Address, Wei},
     U256,
 };
-use workspaces::{network::Sandbox, Contract, Worker};
+use orderly_common::log_tx_result;
+use std::str;
+use workspaces::{network::Sandbox, result::ValueOrReceiptId, Contract, Worker};
 
 pub mod erc20;
-pub mod repo;
 
 use erc20::ERC20DeployedAt;
 
@@ -27,12 +28,12 @@ pub struct AuroraEngine {
 }
 
 pub async fn deploy_latest(worker: &Worker<Sandbox>) -> anyhow::Result<AuroraEngine> {
-    let wasm = repo::AuroraEngineRepo::download_and_compile_latest().await?;
+    let wasm = include_bytes!("../../res/aurora_engine.wasm");
     let (_, sk) = worker.dev_generate().await;
     // We can't use `dev-deploy` here because then the account ID is too long to create
     // `{address}.{engine}` sub-accounts.
     let contract = worker
-        .create_tla_and_deploy(AURORA_ACCOUNT_ID.parse().unwrap(), sk, &wasm)
+        .create_tla_and_deploy(AURORA_ACCOUNT_ID.parse().unwrap(), sk, wasm)
         .await?
         .into_result()?;
     let new_args = NewCallArgs::V2(NewCallArgsV2 {
@@ -63,14 +64,10 @@ pub async fn deploy_latest(worker: &Worker<Sandbox>) -> anyhow::Result<AuroraEng
         .into_result()?;
 
     // Initialize xcc router
-    let router_wasm = repo::AuroraEngineRepo::download()
-        .checkout(repo::LATEST_ENGINE_VERSION)
-        .compile_xcc_router_contract()
-        .execute()
-        .await?;
+    let router_wasm = include_bytes!("../../res/xcc_router.wasm");
     contract
         .call("factory_update")
-        .args(router_wasm)
+        .args(router_wasm.to_vec())
         .max_gas()
         .transact()
         .await?
@@ -192,7 +189,7 @@ impl AuroraEngine {
         input: ContractInput,
         value: Wei,
     ) -> anyhow::Result<SubmitResult> {
-        self.call_evm_contract_with(self.inner.as_account(), address, input, value)
+        self.call_evm_contract_with(self.inner.as_account(), address, None, input, value)
             .await
     }
 
@@ -200,6 +197,7 @@ impl AuroraEngine {
         &self,
         account: &workspaces::Account,
         address: Address,
+        name: Option<&str>,
         input: ContractInput,
         value: Wei,
     ) -> anyhow::Result<SubmitResult> {
@@ -214,7 +212,41 @@ impl AuroraEngine {
             .max_gas()
             .transact()
             .await?;
-        let result = outcome.borsh()?;
+        let outcome = log_tx_result(name, outcome).await?;
+        for outcome in outcome.receipt_outcomes() {
+            if outcome.executor_id.as_str() != "a.test.near" {
+                continue;
+            }
+            if outcome.is_failure() {
+                continue;
+            }
+            match outcome.clone().into_result().unwrap() {
+                ValueOrReceiptId::Value(value) => {
+                    if let Ok(result) = value.borsh::<SubmitResult>() {
+                        if let TransactionStatus::Revert(revert) = &result.status {
+                            println!(
+                                "[TransactionStatus::Revert]: {}",
+                                String::from_utf8_lossy(revert)
+                            )
+                        }
+                    }
+                }
+                ValueOrReceiptId::ReceiptId(_) => todo!(),
+            }
+        }
+        let result: SubmitResult = outcome.borsh()?;
+        match &result.status {
+            TransactionStatus::Succeed(bytes) => {
+                println!("[Succeed]: {}", String::from_utf8_lossy(bytes))
+            }
+            TransactionStatus::Revert(bytes) => {
+                eprintln!("[Revert]: {}", String::from_utf8_lossy(bytes))
+            }
+            _ => {}
+        }
+        for ResultLog { data, .. } in &result.logs {
+            println!("[LOG]: {}", String::from_utf8_lossy(data))
+        }
         Ok(result)
     }
 

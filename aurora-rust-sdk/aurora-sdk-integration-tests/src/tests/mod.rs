@@ -1,16 +1,8 @@
 use crate::{
-    aurora_engine::{erc20, erc20::ERC20DeployedAt, repo::AuroraEngineRepo},
+    aurora_engine::{erc20, erc20::ERC20DeployedAt},
     wnear::Wnear,
 };
 use aurora_engine_types::types::{Address, Wei};
-
-#[tokio::test]
-async fn test_compile_aurora_engine() {
-    let contract = AuroraEngineRepo::download_and_compile_latest()
-        .await
-        .unwrap();
-    assert!(!contract.is_empty());
-}
 
 #[tokio::test]
 async fn test_deploy_aurora_engine() {
