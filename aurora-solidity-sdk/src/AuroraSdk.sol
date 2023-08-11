@@ -138,10 +138,6 @@ library AuroraSdk {
             near.initialized = true;
         }
 
-        if (nearBalance > 0) {
-            near.wNEAR.transferFrom(msg.sender, address(this), uint256(nearBalance));
-        }
-
         return promise_args;
     }
 
