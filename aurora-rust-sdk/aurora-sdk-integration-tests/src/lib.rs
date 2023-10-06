@@ -2,7 +2,7 @@ pub use aurora_engine_sdk;
 pub use aurora_engine_types;
 pub use ethabi;
 pub use tokio;
-pub use workspaces;
+pub use near_workspaces;
 
 pub mod aurora_engine;
 pub mod nep141;

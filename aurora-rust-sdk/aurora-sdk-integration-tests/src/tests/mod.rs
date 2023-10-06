@@ -6,7 +6,7 @@ use aurora_engine_types::types::{Address, Wei};
 
 #[tokio::test]
 async fn test_deploy_aurora_engine() {
-    let worker = workspaces::sandbox().await.unwrap();
+    let worker = near_workspaces::sandbox().await.unwrap();
     let engine = crate::aurora_engine::deploy_latest(&worker).await.unwrap();
     let address = Address::decode("000000000000000000000000000000000000000a").unwrap();
     let balance = Wei::new_u64(123456);
@@ -17,7 +17,7 @@ async fn test_deploy_aurora_engine() {
 
 #[tokio::test]
 async fn test_deploy_erc20() {
-    let worker = workspaces::sandbox().await.unwrap();
+    let worker = near_workspaces::sandbox().await.unwrap();
     let engine = crate::aurora_engine::deploy_latest(&worker).await.unwrap();
     let constructor = erc20::Constructor::load().await.unwrap();
     let address = engine
@@ -42,7 +42,7 @@ async fn test_deploy_erc20() {
 
 #[tokio::test]
 async fn test_deploy_wnear() {
-    let worker = workspaces::sandbox().await.unwrap();
+    let worker = near_workspaces::sandbox().await.unwrap();
     let engine = crate::aurora_engine::deploy_latest(&worker).await.unwrap();
     let wnear = Wnear::deploy(&worker, &engine).await.unwrap();
 

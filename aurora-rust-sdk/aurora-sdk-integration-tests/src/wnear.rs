@@ -2,7 +2,7 @@ use crate::{
     aurora_engine::{erc20::ERC20, AuroraEngine},
     nep141::{self, AccountIdArgs},
 };
-use workspaces::{network::Sandbox, Contract, Worker};
+use near_workspaces::{network::Sandbox, Contract, Worker};
 
 const STORAGE_DEPOSIT_AMOUNT: u128 = 1_000_000_000_000_000_000_000_000;
 
@@ -47,7 +47,7 @@ impl Wnear {
         Ok(result)
     }
 
-    pub async fn storage_deposit(&self, account: &workspaces::Account) -> anyhow::Result<()> {
+    pub async fn storage_deposit(&self, account: &near_workspaces::Account) -> anyhow::Result<()> {
         account
             .call(self.inner.id(), "storage_deposit")
             .args_json(AccountIdArgs {
@@ -62,7 +62,7 @@ impl Wnear {
 
     pub async fn near_deposit(
         &self,
-        account: &workspaces::Account,
+        account: &near_workspaces::Account,
         amount: u128,
     ) -> anyhow::Result<()> {
         account
@@ -74,7 +74,10 @@ impl Wnear {
         Ok(())
     }
 
-    pub async fn ft_balance_of(&self, account_id: &workspaces::AccountId) -> anyhow::Result<u128> {
+    pub async fn ft_balance_of(
+        &self,
+        account_id: &near_workspaces::AccountId,
+    ) -> anyhow::Result<u128> {
         nep141::ft_balance_of(self.inner.as_account(), self.inner.id(), account_id).await
     }
 }

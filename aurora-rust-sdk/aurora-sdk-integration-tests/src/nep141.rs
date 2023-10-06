@@ -1,4 +1,4 @@
-use workspaces::{Account, AccountId};
+use near_workspaces::{Account, AccountId};
 
 pub async fn ft_balance_of(
     viewer: &Account,

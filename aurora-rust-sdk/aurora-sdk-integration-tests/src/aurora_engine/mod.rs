@@ -7,9 +7,9 @@ use aurora_engine_types::{
     types::{Address, Wei},
     U256,
 };
+use near_workspaces::{network::Sandbox, result::ValueOrReceiptId, Contract, Worker};
 use orderly_common::log_tx_result;
 use std::str;
-use workspaces::{network::Sandbox, result::ValueOrReceiptId, Contract, Worker};
 
 pub mod erc20;
 
@@ -95,7 +95,7 @@ impl AuroraEngine {
 
     pub async fn bridge_nep141(
         &self,
-        nep141_id: &workspaces::AccountId,
+        nep141_id: &near_workspaces::AccountId,
     ) -> anyhow::Result<erc20::ERC20> {
         let args = DeployErc20TokenArgs {
             nep141: nep141_id.as_str().parse().unwrap(),
@@ -166,7 +166,7 @@ impl AuroraEngine {
 
     pub async fn deploy_evm_contract_with(
         &self,
-        account: &workspaces::Account,
+        account: &near_workspaces::Account,
         code: Vec<u8>,
     ) -> anyhow::Result<Address> {
         let outcome = account
@@ -195,7 +195,7 @@ impl AuroraEngine {
 
     pub async fn call_evm_contract_with(
         &self,
-        account: &workspaces::Account,
+        account: &near_workspaces::Account,
         address: Address,
         name: Option<&str>,
         input: ContractInput,
