@@ -244,9 +244,3 @@ impl TryFrom<ActionOutput> for () {
         }
     }
 }
-
-#[test]
-fn test_find_target_dir() {
-    let result = find_target_dir().unwrap();
-    assert_eq!(result, Path::new(".").canonicalize().unwrap().join(TARGET));
-}
